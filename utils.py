@@ -93,9 +93,11 @@ def search_by_rating(ratings):
 
 def search_by_genre(genre):
     query_genre = f"""
-                    SELECT title, description, listed_in  
+                    SELECT title, description, listed_in
                     FROM netflix
                     WHERE listed_in LIKE '%{genre}%'
+                    ORDER BY release_year DESC 
+                    LIMIT 10
                     """
     with sqlite3.connect("netflix.db") as connection:
         cursor = connection.cursor()
@@ -115,47 +117,29 @@ def cast_by_cast(first_name, second_name):
     """Получает в качестве аргумента имена двух актеров,
        сохраняет всех актеров из колонки cast и возвращает список тех,
        кто играет с ними в паре больше 2 раз."""
-    query_stars_1 = f"""
+    query_stars = f"""
                     SELECT netflix.cast as stars
                     FROM netflix
-                    WHERE stars LIKE '%{first_name}%'
+                    WHERE stars LIKE '%{first_name}%' 
+                    AND stars LIKE '%{second_name}%' 
                     """
     with sqlite3.connect("netflix.db") as connection:
         cursor = connection.cursor()
-        cursor.execute(query_stars_1)
+        cursor.execute(query_stars)
         movies = cursor.fetchall()
-        search_stars_1 = []
-        search_result_1 = []
+        search_stars = []
+        search_result = []
         for stars in movies:
             for star in stars:
                 name_list = star.split(", ")
                 for name in name_list:
-                    if name in search_stars_1:
-                        if name not in search_result_1 and name != first_name:
-                            search_result_1.append(name)
+                    if name in search_stars:
+                        if name not in search_result and name != first_name and name != second_name:
+                            search_result.append(name)
                     else:
-                        search_stars_1.append(name)
-    query_stars_2 = f"""
-                        SELECT netflix.cast as stars
-                        FROM netflix
-                        WHERE stars LIKE '%{second_name}%'
-                        """
-    with sqlite3.connect("netflix.db") as connection:
-        cursor = connection.cursor()
-        cursor.execute(query_stars_2)
-        movies = cursor.fetchall()
-        search_stars_2 = []
-        search_result_2 = []
-        for stars in movies:
-            for star in stars:
-                name_list = star.split(", ")
-                for name in name_list:
-                    if name in search_stars_2:
-                        if name not in search_result_2 and name != second_name:
-                            search_result_2.append(name)
-                    else:
-                        search_stars_2.append(name)
-        return search_result_1, search_result_2
+                        search_stars.append(name)
+
+        return search_result
 
 
 def movies_search(movies_type='', movies_year='', movies_genre=''):
